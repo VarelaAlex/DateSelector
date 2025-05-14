@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Selector de Fechas y Horarios</title>
+
+    <link rel="stylesheet" href="styles.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/3.1.2/flowbite.min.js"></script>
+    <style>
+        :root {
+            --bg: #f3f4f6; /* gray-100 */
+            --bg-dark: #111827; /* gray-900 */
+        }
+
+        .dark {
+            background-color: var(--bg-dark);
+            color: #f9fafb; /* text-gray-50 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 w-full max-w-xl">
+    <h1 class="text-2xl font-bold mb-4 text-center text-gray-900 dark:text-white">Selección de Entregas</h1>
+
+
+    <div id="date-range-picker" date-rangepicker class="flex items-center mb-5">
+        <div class="relative">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                </svg>
+            </div>
+            <input id="datepicker-range-start" name="start" type="text"
+                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                   placeholder="Select date start">
+        </div>
+        <span class="mx-4 text-gray-500">to</span>
+        <div class="relative">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                </svg>
+            </div>
+            <input id="datepicker-range-end" name="end" type="text"
+                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                   placeholder="Select date end">
+        </div>
+    </div>
+
+
+    <div class="mb-4">
+        <p class="font-medium mb-2 text-gray-700 dark:text-gray-200">Preferencias para primera fecha:</p>
+        <ul id="prefs1" class="flex gap-2 mb-2"></ul>
+    </div>
+
+    <div class="mb-4">
+        <p class="font-medium mb-2 text-gray-700 dark:text-gray-200">Preferencias para segunda fecha:</p>
+        <ul id="prefs2" class="flex gap-2"></ul>
+    </div>
+
+    <button id="confirmBtn"
+            class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300
+                   font-medium rounded-lg text-sm px-5 py-2.5 mt-4 dark:bg-blue-600
+                   dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+        Confirmar selección
+    </button>
+
+    <div id="fechaError"
+         class="hidden fixed top-5 left-1/2 -translate-x-1/2 items-center w-full max-w-xs p-4 text-red-800 bg-red-100 border border-red-300 rounded-lg shadow dark:text-red-100 dark:bg-red-800 dark:border-red-600 z-50"
+         role="alert">
+        <div class="text-sm font-medium text-center">
+            ❌ La segunda fecha debe estar dentro de los 7 días siguientes.
+        </div>
+    </div>
+
+    <p id="result" class="text-green-500 font-medium mt-4 text-center hidden whitespace-pre-line"></p>
+</div>
+
+<script>
+    const prefs1 = document.getElementById('prefs1');
+    const prefs2 = document.getElementById('prefs2');
+    const fecha1 = document.getElementById('datepicker-range-start');
+    const fecha2 = document.getElementById('datepicker-range-end');
+    const fechaError = document.getElementById('fechaError');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const result = document.getElementById('result');
+
+    const horarios = ['mañana', 'tarde', 'noche'];
+
+    function createDraggableList(container) {
+        horarios.forEach(horario => {
+            const li = document.createElement('li');
+            li.textContent = horario;
+            li.className = 'bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-white px-3 py-1 rounded cursor-move select-none';
+            container.appendChild(li);
+        });
+
+        Sortable.create(container, {
+            animation: 150
+        });
+    }
+
+    const showToast = () => {
+        fechaError.classList.remove('hidden');
+        setTimeout(() => {
+            fechaError.classList.add('hidden');
+        }, 4000);
+    };
+
+    function validarFechas() {
+        const f1 = new Date(fecha1.value);
+        const f2 = new Date(fecha2.value);
+
+        if (!fecha1.value || !fecha2.value) {
+            fechaError.classList.add('hidden');
+            return false;
+        }
+
+        const diff = (f2 - f1) / (1000 * 60 * 60 * 24);
+        if (diff < 0 || diff > 7) {
+            showToast();
+            return false;
+        }
+
+        fechaError.classList.add('hidden');
+        return true;
+    }
+
+    confirmBtn.addEventListener('click', () => {
+        if (!validarFechas()) return;
+
+        const preferencias1 = Array.from(prefs1.children).map(li => li.textContent);
+        const preferencias2 = Array.from(prefs2.children).map(li => li.textContent);
+
+        result.classList.remove('hidden');
+        result.textContent = `¡Preferencias guardadas!
+Fecha 1: ${fecha1.value} (${preferencias1.join(', ')})
+Fecha 2: ${fecha2.value} (${preferencias2.join(', ')})`;
+    });
+
+    createDraggableList(prefs1);
+    createDraggableList(prefs2);
+</script>
+</body>
+</html>
